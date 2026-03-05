@@ -2,94 +2,161 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>BioPalabra - Demo Docente</title>
+    <title>BioPalabra Pro - Sistema de Pistas</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        :root { --bio-green: #2e7d32; --bio-light: #e8f5e9; }
-        body { font-family: sans-serif; background: var(--bio-light); display: flex; flex-direction: column; align-items: center; padding: 20px; }
-        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 500px; text-align: center; }
-        #definicion { font-style: italic; margin-bottom: 20px; min-height: 50px; color: #333; }
-        .letras-contenedor { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 20px; }
-        .letra-btn { background: var(--bio-green); color: white; border: none; padding: 12px 18px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 1.1em; }
-        #respuesta-usuario { border-bottom: 2px solid var(--bio-green); min-height: 40px; font-size: 1.5em; letter-spacing: 5px; font-weight: bold; margin: 15px 0; color: var(--bio-green); }
-        .controles { margin-top: 20px; }
-        button#reset { background: #d32f2f; color: white; border: none; padding: 8px 15px; border-radius: 5px; }
+        :root { --bio-green: #2e7d32; --bio-accent: #8bc34a; --bio-fail: #d32f2f; --progreso-bg: #e0e0e0; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f1f8e9; display: flex; flex-direction: column; align-items: center; padding: 15px; margin: 0; padding-top: 30px; }
+        
+        .progress-container { width: 100%; background: var(--progreso-bg); height: 8px; position: fixed; top: 0; left: 0; z-index: 1000; }
+        .progress-bar { height: 100%; background: var(--bio-accent); width: 0%; transition: width 0.4s ease; }
+
+        .marcador { position: fixed; top: 15px; right: 10px; background: rgba(255,255,255,0.9); padding: 5px 10px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); font-weight: bold; font-size: 0.85em; z-index: 100; }
+        .aciertos { color: var(--bio-green); }
+        .fallos { color: var(--bio-fail); }
+
+        .card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.08); width: 90%; max-width: 500px; text-align: center; margin-top: 30px; position: relative; }
+        
+        #definicion { font-size: 1.4em; font-weight: 500; color: #2c3e50; margin-bottom: 15px; line-height: 1.3; border-left: 5px solid var(--bio-accent); padding-left: 12px; text-align: left; }
+
+        #respuesta-usuario { border-bottom: 3px solid var(--bio-green); min-height: 45px; font-size: 1.7em; letter-spacing: 3px; font-weight: bold; margin: 15px 0; color: var(--bio-green); text-transform: uppercase; display: flex; justify-content: center; align-items: center; }
+
+        .letras-contenedor { display: grid; gap: 8px; justify-content: center; margin: 15px 0; width: 100%; }
+        .letra-btn { background: var(--bio-green); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1.4em; aspect-ratio: 1 / 1; width: 100%; display: flex; justify-content: center; align-items: center; }
+        .letra-btn:disabled { background: #ccc; opacity: 0; transform: scale(0.8); }
+
+        .controles { display: flex; gap: 8px; justify-content: center; margin-top: 15px; flex-wrap: wrap; }
+        .btn-ui { border: none; padding: 10px 15px; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 0.9em; }
+        #btn-pista { background: #00bcd4; color: white; }
+        #btn-mix { background: #ff9800; color: white; }
+        #btn-reset { background: var(--bio-fail); color: white; }
+
+        /* Estilos del Mensaje Emergente (Modal) */
+        .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); justify-content: center; align-items: center; }
+        .modal-content { background: white; padding: 20px; border-radius: 15px; width: 80%; max-width: 300px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        .modal-btns { display: flex; justify-content: space-around; margin-top: 20px; }
+        .btn-si { background: var(--bio-green); color: white; border: none; padding: 8px 20px; border-radius: 5px; cursor: pointer; }
+        .btn-no { background: var(--bio-fail); color: white; border: none; padding: 8px 20px; border-radius: 5px; cursor: pointer; }
     </style>
 </head>
 <body>
 
+<div class="progress-container"><div id="bar" class="progress-bar"></div></div>
+<div class="marcador">A: <span id="val-aciertos" class="aciertos">0</span> | F: <span id="val-fallos" class="fallos">0</span></div>
+
+<div id="modalPista" class="modal">
+    <div class="modal-content">
+        <p>¿Deseas una pista?<br><b>Se restará 1 punto de tus aciertos.</b></p>
+        <div class="modal-btns">
+            <button class="btn-si" onclick="confirmarPista()">SÍ</button>
+            <button class="btn-no" onclick="cerrarModal()">NO</button>
+        </div>
+    </div>
+</div>
+
 <div class="card">
-    <h2>🧬 Biología en Palabras</h2>
-    <div id="definicion">Cargando definición...</div>
+    <h3 style="color: var(--bio-green); margin-top: 0;">🔬 BioPalabra - Desafío</h3>
+    <div id="definicion">Verificando banco de datos...</div>
     <div id="respuesta-usuario"></div>
     <div class="letras-contenedor" id="banco-letras"></div>
-    
     <div class="controles">
-        <button id="reset" onclick="limpiarRespuesta()">Borrar</button>
+        <button id="btn-pista" class="btn-ui" onclick="abrirModal()">💡 Pista</button>
+        <button id="btn-mix" class="btn-ui" onclick="mezclarLetrasActuales()">🔀 Mix</button>
+        <button id="btn-reset" class="btn-ui" onclick="limpiarRespuesta()">❌ Borrar</button>
     </div>
 </div>
 
 <script>
-    // PEGE AQUÍ SU ENLACE DE PUBLICACIÓN (CSV) DE GOOGLE SHEETS
-    const URL_DE_SU_HOJA = "https://docs.google.com/spreadsheets/d/e/2PACX-1vThIT0WPjDkvKled_w8-SRy3wt8ObeXLw4INzbFf5urZtvCAa4dPiHALUTqdO_sZmZfFGnkF9WW5i00/pub?gid=0&single=true&output=csv";
+    const URL_DE_SU_HOJA = "https://docs.google.com/spreadsheets/d/e/2PACX-1vThIT0WPjDkvKled_w8-SRy3wt8ObeXLw4INzbFf5urZtvCAa4dPiHALUTqdO_sZmZfFGnkF9WW5i00/pub?gid=0&single=true&output=csv"; 
+    const bancoRespaldo = [
+        { palabra: "NÚCLEO", def: "Organelo que protege el material genético en células eucariotas." },
+        { palabra: "VIRUS", def: "Agente infeccioso microscópico que requiere una célula para replicarse." },
+        { palabra: "MEMBRANA", def: "Capa que delimita la célula y regula el paso de sustancias." }
+    ];
 
     let bancoDatos = [];
     let actual = 0;
     let intento = "";
+    let aciertos = 0;
+    let fallos = 0;
 
-    async function cargarDatosDesdeNube() {
-        document.getElementById('definicion').innerText = "Sincronizando con el banco de datos biológicos...";
+    async function cargarDatos() {
         try {
-            const respuesta = await fetch(URL_DE_SU_HOJA);
-            const texto = await respuesta.text();
-            
-            // Convertir CSV a Objeto JSON
-            const filas = texto.split("\n").slice(1); // Omitir encabezado
-            bancoDatos = filas.map(fila => {
-                const [palabra, def] = fila.split(",");
-                return { palabra: palabra.trim().toUpperCase(), def: def.trim() };
-            });
-
-            iniciarJuego();
-        } catch (error) {
-            document.getElementById('definicion').innerText = "Error de conexión. Verifique su internet.";
-        }
+            const res = await fetch(URL_DE_SU_HOJA);
+            const data = await res.text();
+            const filas = data.split("\n").slice(1);
+            bancoDatos = filas.map(f => {
+                const columnas = f.split(",");
+                return { palabra: columnas[0].trim().toUpperCase(), def: columnas[1].trim() };
+            }).filter(item => item && item.palabra.length > 0 && item.palabra.length <= 12);
+            if (bancoDatos.length === 0) bancoDatos = bancoRespaldo;
+        } catch (e) { bancoDatos = bancoRespaldo; }
+        iniciarJuego();
     }
 
     function iniciarJuego() {
-        if (bancoDatos.length === 0) return;
-        
+        if (actual >= bancoDatos.length) { alert("¡Excelente! Has completado la unidad."); actual = 0; }
+        const porcentaje = (actual / bancoDatos.length) * 100;
+        document.getElementById('bar').style.width = porcentaje + "%";
         intento = "";
         document.getElementById('respuesta-usuario').innerText = "";
-        const item = bancoDatos[actual];
-        document.getElementById('definicion').innerText = item.def;
-        
-        // Lógica de desordenar letras (Shuffle)
-        let letras = item.palabra.split('').sort(() => Math.random() - 0.5);
+        document.getElementById('definicion').innerText = bancoDatos[actual].def;
+        renderLetras(bancoDatos[actual].palabra.split('').sort(() => Math.random() - 0.5));
+    }
+
+    function renderLetras(letrasArray) {
         const contenedor = document.getElementById('banco-letras');
         contenedor.innerHTML = "";
-        
-        letras.forEach(L => {
+        const numCols = Math.ceil(letrasArray.length / 2);
+        contenedor.style.gridTemplateColumns = `repeat(${numCols}, 1fr)`;
+        letrasArray.forEach((L) => {
             let btn = document.createElement('button');
             btn.className = "letra-btn";
             btn.innerText = L;
             btn.onclick = () => {
                 intento += L;
                 document.getElementById('respuesta-usuario').innerText = intento;
-                btn.style.visibility = "hidden";
-                verificarRespuesta();
+                btn.disabled = true;
+                verificar();
             };
             contenedor.appendChild(btn);
         });
     }
 
-    function verificarRespuesta() {
-        const palabraCorrecta = bancoDatos[actual].palabra;
-        if (intento === palabraCorrecta) {
-            alert("¡Logro alcanzado! " + palabraCorrecta + " identificada correctamente.");
-            actual = (actual + 1) % bancoDatos.length;
-            iniciarJuego();
-        } else if (intento.length === palabraCorrecta.length) {
-            alert("Error en la secuencia nucleotídica (ortográfica). Reintente.");
+    // Lógica de Modal y Pista
+    function abrirModal() {
+        if (aciertos <= 0) {
+            alert("Necesitas al menos 1 punto de acierto para pedir una pista.");
+            return;
+        }
+        document.getElementById('modalPista').style.display = "flex";
+    }
+
+    function cerrarModal() { document.getElementById('modalPista').style.display = "none"; }
+
+    function confirmarPista() {
+        aciertos--;
+        document.getElementById('val-aciertos').innerText = aciertos;
+        const primeraLetra = bancoDatos[actual].palabra[0];
+        alert(`PISTA: La palabra comienza con la letra "${primeraLetra}"`);
+        cerrarModal();
+    }
+
+    function mezclarLetrasActuales() {
+        limpiarRespuesta();
+        renderLetras(bancoDatos[actual].palabra.split('').sort(() => Math.random() - 0.5));
+    }
+
+    function verificar() {
+        const correcta = bancoDatos[actual].palabra;
+        if (intento === correcta) {
+            aciertos++;
+            document.getElementById('val-aciertos').innerText = aciertos;
+            setTimeout(() => { actual++; iniciarJuego(); }, 600);
+        } else if (intento.length === correcta.length) {
+            fallos++;
+            document.getElementById('val-fallos').innerText = fallos;
+            alert("Error en la secuencia. ¡Intenta de nuevo!");
             limpiarRespuesta();
         }
     }
@@ -97,11 +164,10 @@
     function limpiarRespuesta() {
         intento = "";
         document.getElementById('respuesta-usuario').innerText = "";
-        document.querySelectorAll('.letra-btn').forEach(b => b.style.visibility = "visible");
+        document.querySelectorAll('.letra-btn').forEach(b => b.disabled = false);
     }
 
-    // Iniciar carga al abrir
-    cargarDatosDesdeNube();
+    cargarDatos();
 </script>
 </body>
 </html>
