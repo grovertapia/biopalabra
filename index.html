@@ -2,61 +2,90 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>BioPalabra Pro - Sistema de Pistas</title>
+    <title>BioPalabra Pro - Diseño Simétrico</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        :root { --bio-green: #2e7d32; --bio-accent: #8bc34a; --bio-fail: #d32f2f; --progreso-bg: #e0e0e0; }
-        body { font-family: 'Segoe UI', sans-serif; background: #f1f8e9; display: flex; flex-direction: column; align-items: center; padding: 15px; margin: 0; padding-top: 30px; }
+        :root { 
+            --bio-green: #2e7d32; 
+            --bio-accent: #8bc34a; 
+            --bio-fail: #d32f2f; 
+            --progreso-bg: #e0e0e0;
+            /* Definimos el tamaño base para control absoluto */
+            --fuente-def: 1.2rem; 
+            --fuente-letra: 2.4rem; /* El doble de la definición */
+        }
+        body { font-family: 'Segoe UI', sans-serif; background: #f1f8e9; display: flex; flex-direction: column; align-items: center; padding: 15px; margin: 0; padding-top: 40px; }
         
         .progress-container { width: 100%; background: var(--progreso-bg); height: 8px; position: fixed; top: 0; left: 0; z-index: 1000; }
         .progress-bar { height: 100%; background: var(--bio-accent); width: 0%; transition: width 0.4s ease; }
 
         .marcador { position: fixed; top: 15px; right: 10px; background: rgba(255,255,255,0.9); padding: 5px 10px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); font-weight: bold; font-size: 0.85em; z-index: 100; }
-        .aciertos { color: var(--bio-green); }
-        .fallos { color: var(--bio-fail); }
 
-        .card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.08); width: 90%; max-width: 500px; text-align: center; margin-top: 30px; position: relative; }
+        .card { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.08); width: 95%; max-width: 550px; text-align: center; margin-top: 20px; }
         
-        #definicion { font-size: 1.4em; font-weight: 500; color: #2c3e50; margin-bottom: 15px; line-height: 1.3; border-left: 5px solid var(--bio-accent); padding-left: 12px; text-align: left; }
+        /* Ajuste fuente definición */
+        #definicion { font-size: var(--fuente-def); font-weight: 500; color: #2c3e50; margin-bottom: 20px; line-height: 1.4; border-left: 5px solid var(--bio-accent); padding-left: 12px; text-align: left; }
 
-        #respuesta-usuario { border-bottom: 3px solid var(--bio-green); min-height: 45px; font-size: 1.7em; letter-spacing: 3px; font-weight: bold; margin: 15px 0; color: var(--bio-green); text-transform: uppercase; display: flex; justify-content: center; align-items: center; }
+        #respuesta-usuario { border-bottom: 3px solid var(--bio-green); min-height: 50px; font-size: 2rem; letter-spacing: 4px; font-weight: bold; margin: 20px 0; color: var(--bio-green); text-transform: uppercase; display: flex; justify-content: center; align-items: center; }
 
-        .letras-contenedor { display: grid; gap: 8px; justify-content: center; margin: 15px 0; width: 100%; }
-        .letra-btn { background: var(--bio-green); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1.4em; aspect-ratio: 1 / 1; width: 100%; display: flex; justify-content: center; align-items: center; }
-        .letra-btn:disabled { background: #ccc; opacity: 0; transform: scale(0.8); }
+        /* CONTENEDOR DE LETRAS: Centrado y fijo */
+        .letras-contenedor { 
+            display: flex; 
+            flex-wrap: wrap; 
+            justify-content: center; /* Alineación al centro */
+            align-content: center;
+            gap: 10px; 
+            margin: 20px auto; 
+            width: 100%;
+            max-width: 450px; /* Evita que se expandan demasiado */
+        }
 
-        .controles { display: flex; gap: 8px; justify-content: center; margin-top: 15px; flex-wrap: wrap; }
+        /* BOTÓN DE LETRA: Tamaño no mayor al doble de la fuente (aprox 4.8rem - 5rem) */
+        .letra-btn { 
+            background: var(--bio-green); 
+            color: white; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            font-size: var(--fuente-letra); /* El doble de la definición */
+            width: 70px; /* Tamaño fijo */
+            height: 70px; /* Tamaño fijo para ser cuadrado */
+            display: flex; 
+            justify-content: center; 
+            align-items: center;
+            transition: transform 0.1s;
+        }
+        .letra-btn:disabled { background: #ccc; opacity: 0; transform: scale(0.5); }
+
+        .controles { display: flex; gap: 8px; justify-content: center; margin-top: 20px; flex-wrap: wrap; }
         .btn-ui { border: none; padding: 10px 15px; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 0.9em; }
         #btn-pista { background: #00bcd4; color: white; }
         #btn-mix { background: #ff9800; color: white; }
         #btn-reset { background: var(--bio-fail); color: white; }
 
-        /* Estilos del Mensaje Emergente (Modal) */
+        /* Modal Pista */
         .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); justify-content: center; align-items: center; }
-        .modal-content { background: white; padding: 20px; border-radius: 15px; width: 80%; max-width: 300px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
-        .modal-btns { display: flex; justify-content: space-around; margin-top: 20px; }
-        .btn-si { background: var(--bio-green); color: white; border: none; padding: 8px 20px; border-radius: 5px; cursor: pointer; }
-        .btn-no { background: var(--bio-fail); color: white; border: none; padding: 8px 20px; border-radius: 5px; cursor: pointer; }
+        .modal-content { background: white; padding: 25px; border-radius: 15px; width: 85%; max-width: 320px; text-align: center; }
     </style>
 </head>
 <body>
 
 <div class="progress-container"><div id="bar" class="progress-bar"></div></div>
-<div class="marcador">A: <span id="val-aciertos" class="aciertos">0</span> | F: <span id="val-fallos" class="fallos">0</span></div>
+<div class="marcador">Aciertos: <span id="val-aciertos">0</span></div>
 
 <div id="modalPista" class="modal">
     <div class="modal-content">
-        <p>¿Deseas una pista?<br><b>Se restará 1 punto de tus aciertos.</b></p>
-        <div class="modal-btns">
-            <button class="btn-si" onclick="confirmarPista()">SÍ</button>
-            <button class="btn-no" onclick="cerrarModal()">NO</button>
+        <p>¿Usar pista?<br><small>Se restará 1 acierto.</small></p>
+        <div style="display:flex; justify-content: space-around; margin-top:15px;">
+            <button onclick="confirmarPista()" style="background:var(--bio-green); color:white; border:none; padding:10px 20px; border-radius:5px;">SÍ</button>
+            <button onclick="cerrarModal()" style="background:var(--bio-fail); color:white; border:none; padding:10px 20px; border-radius:5px;">NO</button>
         </div>
     </div>
 </div>
 
 <div class="card">
-    <h3 style="color: var(--bio-green); margin-top: 0;">🔬 BioPalabra - Desafío</h3>
-    <div id="definicion">Verificando banco de datos...</div>
+    <div id="definicion">Cargando definición biológica...</div>
     <div id="respuesta-usuario"></div>
     <div class="letras-contenedor" id="banco-letras"></div>
     <div class="controles">
@@ -69,16 +98,15 @@
 <script>
     const URL_DE_SU_HOJA = "https://docs.google.com/spreadsheets/d/e/2PACX-1vThIT0WPjDkvKled_w8-SRy3wt8ObeXLw4INzbFf5urZtvCAa4dPiHALUTqdO_sZmZfFGnkF9WW5i00/pub?gid=0&single=true&output=csv"; 
     const bancoRespaldo = [
-        { palabra: "NÚCLEO", def: "Organelo que protege el material genético en células eucariotas." },
-        { palabra: "VIRUS", def: "Agente infeccioso microscópico que requiere una célula para replicarse." },
-        { palabra: "MEMBRANA", def: "Capa que delimita la célula y regula el paso de sustancias." }
+        { palabra: "ENZIMA", def: "Proteína que cataliza las reacciones químicas en los seres vivos." },
+        { palabra: "VACUOLA", def: "Organelo celular que almacena agua, sales y nutrientes." },
+        { palabra: "NERVIO", def: "Cordón formado por axones que transmite impulsos sensoriales." }
     ];
 
     let bancoDatos = [];
     let actual = 0;
     let intento = "";
     let aciertos = 0;
-    let fallos = 0;
 
     async function cargarDatos() {
         try {
@@ -86,18 +114,17 @@
             const data = await res.text();
             const filas = data.split("\n").slice(1);
             bancoDatos = filas.map(f => {
-                const columnas = f.split(",");
-                return { palabra: columnas[0].trim().toUpperCase(), def: columnas[1].trim() };
-            }).filter(item => item && item.palabra.length > 0 && item.palabra.length <= 12);
-            if (bancoDatos.length === 0) bancoDatos = bancoRespaldo;
+                const cols = f.split(",");
+                return { palabra: cols[0].trim().toUpperCase(), def: cols[1].trim() };
+            }).filter(i => i && i.palabra.length > 0 && i.palabra.length <= 12);
+            if(bancoDatos.length === 0) bancoDatos = bancoRespaldo;
         } catch (e) { bancoDatos = bancoRespaldo; }
         iniciarJuego();
     }
 
     function iniciarJuego() {
-        if (actual >= bancoDatos.length) { alert("¡Excelente! Has completado la unidad."); actual = 0; }
-        const porcentaje = (actual / bancoDatos.length) * 100;
-        document.getElementById('bar').style.width = porcentaje + "%";
+        if (actual >= bancoDatos.length) { alert("¡Unidad completada!"); actual = 0; }
+        document.getElementById('bar').style.width = (actual / bancoDatos.length * 100) + "%";
         intento = "";
         document.getElementById('respuesta-usuario').innerText = "";
         document.getElementById('definicion').innerText = bancoDatos[actual].def;
@@ -107,9 +134,11 @@
     function renderLetras(letrasArray) {
         const contenedor = document.getElementById('banco-letras');
         contenedor.innerHTML = "";
-        const numCols = Math.ceil(letrasArray.length / 2);
-        contenedor.style.gridTemplateColumns = `repeat(${numCols}, 1fr)`;
-        letrasArray.forEach((L) => {
+        
+        // Para asegurar que se dividan en 2 líneas centradas:
+        const mitad = Math.ceil(letrasArray.length / 2);
+        
+        letrasArray.forEach((L, index) => {
             let btn = document.createElement('button');
             btn.className = "letra-btn";
             btn.innerText = L;
@@ -119,26 +148,23 @@
                 btn.disabled = true;
                 verificar();
             };
+            // Forzamos un salto de línea invisible después de la mitad
+            if (index === mitad) {
+                let br = document.createElement('div');
+                br.style.flexBasis = "100%";
+                br.style.height = "0";
+                contenedor.appendChild(br);
+            }
             contenedor.appendChild(btn);
         });
     }
 
-    // Lógica de Modal y Pista
-    function abrirModal() {
-        if (aciertos <= 0) {
-            alert("Necesitas al menos 1 punto de acierto para pedir una pista.");
-            return;
-        }
-        document.getElementById('modalPista').style.display = "flex";
-    }
-
+    function abrirModal() { if(aciertos > 0) document.getElementById('modalPista').style.display = "flex"; else alert("Sin puntos suficientes."); }
     function cerrarModal() { document.getElementById('modalPista').style.display = "none"; }
-
     function confirmarPista() {
         aciertos--;
         document.getElementById('val-aciertos').innerText = aciertos;
-        const primeraLetra = bancoDatos[actual].palabra[0];
-        alert(`PISTA: La palabra comienza con la letra "${primeraLetra}"`);
+        alert("La palabra empieza con: " + bancoDatos[actual].palabra[0]);
         cerrarModal();
     }
 
@@ -148,15 +174,12 @@
     }
 
     function verificar() {
-        const correcta = bancoDatos[actual].palabra;
-        if (intento === correcta) {
+        if (intento === bancoDatos[actual].palabra) {
             aciertos++;
             document.getElementById('val-aciertos').innerText = aciertos;
             setTimeout(() => { actual++; iniciarJuego(); }, 600);
-        } else if (intento.length === correcta.length) {
-            fallos++;
-            document.getElementById('val-fallos').innerText = fallos;
-            alert("Error en la secuencia. ¡Intenta de nuevo!");
+        } else if (intento.length === bancoDatos[actual].palabra.length) {
+            alert("Incorrecto.");
             limpiarRespuesta();
         }
     }
