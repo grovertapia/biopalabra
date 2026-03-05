@@ -2,84 +2,74 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>BioPalabra Pro - Modo Experto</title>
+    <title>BioPalabra Pro - Aleatorio y Proporcional</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         :root { 
             --bio-green: #2e7d32; 
             --bio-accent: #8bc34a; 
             --bio-fail: #d32f2f; 
-            --fuente-def: 1.1rem; 
-            --fuente-letra: 2.2rem; /* El doble de la def */
-            --tamano-box: 4.8rem; /* Tamaño fijo: ~2.2x la fuente */
+            /* AJUSTES DE FUENTE SOLICITADOS */
+            --fuente-def: 2.2rem; /* Duplicado respecto a la anterior */
+            --fuente-letra: 2rem; 
+            /* Recuadro = Fuente + 1/3 de la fuente (aprox 1.33x) */
+            --tamano-box: 2.7rem; 
         }
         body { font-family: 'Segoe UI', sans-serif; background: #f1f8e9; display: flex; flex-direction: column; align-items: center; padding: 10px; margin: 0; }
         
-        /* Cronómetro Superior */
-        .header-game { width: 100%; display: flex; justify-content: space-between; padding: 10px; box-sizing: border-box; position: fixed; top: 8px; z-index: 100; }
-        .timer { background: var(--bio-fail); color: white; padding: 5px 15px; border-radius: 20px; font-weight: bold; font-size: 1.2rem; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-        .marcador { background: white; padding: 5px 15px; border-radius: 20px; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .header-game { width: 100%; display: flex; justify-content: space-between; padding: 10px; box-sizing: border-box; position: fixed; top: 0; z-index: 100; background: #f1f8e9; }
+        .timer { background: var(--bio-fail); color: white; padding: 5px 12px; border-radius: 15px; font-weight: bold; }
+        .marcador { background: white; padding: 5px 12px; border-radius: 15px; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
 
-        .card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.08); width: 95%; max-width: 500px; text-align: center; margin-top: 60px; }
+        .card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 8px 20px rgba(0,0,0,0.08); width: 95%; max-width: 500px; text-align: center; margin-top: 50px; }
         
-        #definicion { font-size: var(--fuente-def); color: #34495e; margin-bottom: 15px; line-height: 1.3; border-left: 5px solid var(--bio-accent); padding-left: 10px; text-align: left; min-height: 60px; }
+        /* Definición con tamaño duplicado */
+        #definicion { font-size: var(--fuente-def); color: #2c3e50; margin-bottom: 20px; line-height: 1.2; border-left: 8px solid var(--bio-accent); padding-left: 15px; text-align: left; }
 
-        #respuesta-usuario { border-bottom: 3px solid var(--bio-green); min-height: 45px; font-size: 1.8rem; letter-spacing: 3px; font-weight: bold; margin-bottom: 15px; color: var(--bio-green); text-transform: uppercase; }
+        #respuesta-usuario { border-bottom: 3px solid var(--bio-green); min-height: 40px; font-size: 1.8rem; letter-spacing: 3px; font-weight: bold; margin-bottom: 20px; color: var(--bio-green); text-transform: uppercase; }
 
-        /* CONTENEDOR: Forzar alineación centrada y distribución en líneas */
-        .letras-contenedor { 
-            display: flex; 
-            flex-wrap: wrap; 
-            justify-content: center; 
-            gap: 10px; 
-            margin: 10px auto;
-            width: 100%;
-        }
+        .letras-contenedor { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 10px auto; width: 100%; }
 
-        /* RECUADROS: Tamaño Fijo e Invariable */
+        /* RECUADROS: Tamaño fuente + 1/3 (Estricto) */
         .letra-btn { 
             background: var(--bio-green); 
             color: white; 
             border: none; 
-            border-radius: 8px; 
+            border-radius: 6px; 
             cursor: pointer; 
             font-weight: bold; 
             font-size: var(--fuente-letra);
-            /* Bloqueo de tamaño */
             width: var(--tamano-box) !important;
             height: var(--tamano-box) !important;
-            min-width: var(--tamano-box);
-            min-height: var(--tamano-box);
             display: flex; 
             justify-content: center; 
             align-items: center;
-            flex-shrink: 0; /* Evita que se aplasten */
+            flex-shrink: 0;
         }
         .letra-btn:disabled { opacity: 0; pointer-events: none; }
 
         .controles { display: flex; gap: 8px; justify-content: center; margin-top: 15px; }
-        .btn-ui { border: none; padding: 8px 12px; border-radius: 5px; font-weight: bold; cursor: pointer; color: white; }
+        .btn-ui { border: none; padding: 10px; border-radius: 5px; font-weight: bold; cursor: pointer; color: white; font-size: 0.8rem; }
         #btn-pista { background: #00bcd4; }
         #btn-mix { background: #ff9800; }
         #btn-reset { background: var(--bio-fail); }
 
-        /* Modal */
         .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; }
-        .modal-content { background: white; padding: 20px; border-radius: 15px; text-align: center; width: 280px; }
+        .modal-content { background: white; padding: 20px; border-radius: 15px; text-align: center; width: 260px; }
     </style>
 </head>
 <body>
 
 <div class="header-game">
     <div class="timer">⏳ <span id="time-val">30</span>s</div>
-    <div class="marcador">Aciertos: <span id="val-aciertos">0</span></div>
+    <div class="marcador">A: <span id="val-aciertos">0</span></div>
 </div>
 
 <div id="modalPista" class="modal">
     <div class="modal-content">
-        <p>¿Gastar 1 acierto por una pista?</p>
-        <button onclick="confirmarPista()" style="background:var(--bio-green); color:white; border:none; padding:10px; border-radius:5px; margin-right:10px;">SÍ</button>
-        <button onclick="cerrarModal()" style="background:var(--bio-fail); color:white; border:none; padding:10px; border-radius:5px;">NO</button>
+        <p style="font-size: 1.2rem;">¿Usar 1 acierto por una pista?</p>
+        <button onclick="confirmarPista()" style="background:var(--bio-green); color:white; border:none; padding:10px 20px; border-radius:5px;">SÍ</button>
+        <button onclick="cerrarModal()" style="background:var(--bio-fail); color:white; border:none; padding:10px 20px; border-radius:5px;">NO</button>
     </div>
 </div>
 
@@ -97,9 +87,9 @@
 <script>
     const URL_DE_SU_HOJA = "https://docs.google.com/spreadsheets/d/e/2PACX-1vThIT0WPjDkvKled_w8-SRy3wt8ObeXLw4INzbFf5urZtvCAa4dPiHALUTqdO_sZmZfFGnkF9WW5i00/pub?gid=0&single=true&output=csv"; 
     const bancoRespaldo = [
-        { palabra: "RIBOSOMA", def: "Complejo molecular encargado de sintetizar proteínas." },
-        { palabra: "GENOMA", def: "Secuencia completa de material genético de un organismo." },
-        { palabra: "BIOSFERA", def: "Sistema formado por el conjunto de los seres vivos del planeta." }
+        { palabra: "CROMOSOMA", def: "Estructura que contiene el ADN." },
+        { palabra: "MEIOSIS", def: "División celular que produce gametos." },
+        { palabra: "ALELO", def: "Forma alternativa de un gen." }
     ];
 
     let bancoDatos = [];
@@ -117,9 +107,14 @@
             bancoDatos = filas.map(f => {
                 const c = f.split(",");
                 return { palabra: c[0].trim().toUpperCase(), def: c[1].trim() };
-            }).filter(i => i && i.palabra.length > 0 && i.palabra.length <= 12);
+            }).filter(i => i && i.palabra.length > 0);
+            
             if(bancoDatos.length === 0) bancoDatos = bancoRespaldo;
         } catch (e) { bancoDatos = bancoRespaldo; }
+        
+        // ALEATORIEDAD: Mezclar el banco de datos al iniciar
+        bancoDatos.sort(() => Math.random() - 0.5);
+        
         iniciarJuego();
     }
 
@@ -128,7 +123,11 @@
         tiempoRestante = 30;
         document.getElementById('time-val').innerText = tiempoRestante;
         
-        if (actual >= bancoDatos.length) { alert("¡Misión cumplida!"); actual = 0; }
+        if (actual >= bancoDatos.length) { 
+            alert("¡Felicidades! Has completado todos los desafíos."); 
+            actual = 0;
+            bancoDatos.sort(() => Math.random() - 0.5); // Re-mezclar para nueva vuelta
+        }
         
         intento = "";
         document.getElementById('respuesta-usuario').innerText = "";
@@ -140,7 +139,7 @@
             document.getElementById('time-val').innerText = tiempoRestante;
             if (tiempoRestante <= 0) {
                 clearInterval(timerId);
-                alert("¡Tiempo agotado! Reintentando...");
+                alert("¡Tiempo fuera!");
                 iniciarJuego();
             }
         }, 1000);
@@ -177,12 +176,12 @@
             clearInterval(timerId);
             setTimeout(() => { actual++; iniciarJuego(); }, 600);
         } else if (intento.length === bancoDatos[actual].palabra.length) {
-            alert("Secuencia errónea.");
+            alert("Incorrecto.");
             limpiarRespuesta();
         }
     }
 
-    function abrirModal() { if(aciertos > 0) document.getElementById('modalPista').style.display = "flex"; else alert("Aciertos insuficientes."); }
+    function abrirModal() { if(aciertos > 0) document.getElementById('modalPista').style.display = "flex"; else alert("No tienes aciertos."); }
     function cerrarModal() { document.getElementById('modalPista').style.display = "none"; }
     function confirmarPista() {
         aciertos--;
