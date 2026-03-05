@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>BioPalabra - Demo Docente</title>
+    <style>
+        :root { --bio-green: #2e7d32; --bio-light: #e8f5e9; }
+        body { font-family: sans-serif; background: var(--bio-light); display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 500px; text-align: center; }
+        #definicion { font-style: italic; margin-bottom: 20px; min-height: 50px; color: #333; }
+        .letras-contenedor { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 20px; }
+        .letra-btn { background: var(--bio-green); color: white; border: none; padding: 12px 18px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 1.1em; }
+        #respuesta-usuario { border-bottom: 2px solid var(--bio-green); min-height: 40px; font-size: 1.5em; letter-spacing: 5px; font-weight: bold; margin: 15px 0; color: var(--bio-green); }
+        .controles { margin-top: 20px; }
+        button#reset { background: #d32f2f; color: white; border: none; padding: 8px 15px; border-radius: 5px; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>🧬 Biología en Palabras</h2>
+    <div id="definicion">Cargando definición...</div>
+    <div id="respuesta-usuario"></div>
+    <div class="letras-contenedor" id="banco-letras"></div>
+    
+    <div class="controles">
+        <button id="reset" onclick="limpiarRespuesta()">Borrar</button>
+    </div>
+</div>
+
+<script>
+    // PEGE AQUÍ SU ENLACE DE PUBLICACIÓN (CSV) DE GOOGLE SHEETS
+    const URL_DE_SU_HOJA = "https://docs.google.com/spreadsheets/d/e/2PACX-1vThIT0WPjDkvKled_w8-SRy3wt8ObeXLw4INzbFf5urZtvCAa4dPiHALUTqdO_sZmZfFGnkF9WW5i00/pub?gid=0&single=true&output=csv";
+
+    let bancoDatos = [];
+    let actual = 0;
+    let intento = "";
+
+    async function cargarDatosDesdeNube() {
+        document.getElementById('definicion').innerText = "Sincronizando con el banco de datos biológicos...";
+        try {
+            const respuesta = await fetch(URL_DE_SU_HOJA);
+            const texto = await respuesta.text();
+            
+            // Convertir CSV a Objeto JSON
+            const filas = texto.split("\n").slice(1); // Omitir encabezado
+            bancoDatos = filas.map(fila => {
+                const [palabra, def] = fila.split(",");
+                return { palabra: palabra.trim().toUpperCase(), def: def.trim() };
+            });
+
+            iniciarJuego();
+        } catch (error) {
+            document.getElementById('definicion').innerText = "Error de conexión. Verifique su internet.";
+        }
+    }
+
+    function iniciarJuego() {
+        if (bancoDatos.length === 0) return;
+        
+        intento = "";
+        document.getElementById('respuesta-usuario').innerText = "";
+        const item = bancoDatos[actual];
+        document.getElementById('definicion').innerText = item.def;
+        
+        // Lógica de desordenar letras (Shuffle)
+        let letras = item.palabra.split('').sort(() => Math.random() - 0.5);
+        const contenedor = document.getElementById('banco-letras');
+        contenedor.innerHTML = "";
+        
+        letras.forEach(L => {
+            let btn = document.createElement('button');
+            btn.className = "letra-btn";
+            btn.innerText = L;
+            btn.onclick = () => {
+                intento += L;
+                document.getElementById('respuesta-usuario').innerText = intento;
+                btn.style.visibility = "hidden";
+                verificarRespuesta();
+            };
+            contenedor.appendChild(btn);
+        });
+    }
+
+    function verificarRespuesta() {
+        const palabraCorrecta = bancoDatos[actual].palabra;
+        if (intento === palabraCorrecta) {
+            alert("¡Logro alcanzado! " + palabraCorrecta + " identificada correctamente.");
+            actual = (actual + 1) % bancoDatos.length;
+            iniciarJuego();
+        } else if (intento.length === palabraCorrecta.length) {
+            alert("Error en la secuencia nucleotídica (ortográfica). Reintente.");
+            limpiarRespuesta();
+        }
+    }
+
+    function limpiarRespuesta() {
+        intento = "";
+        document.getElementById('respuesta-usuario').innerText = "";
+        document.querySelectorAll('.letra-btn').forEach(b => b.style.visibility = "visible");
+    }
+
+    // Iniciar carga al abrir
+    cargarDatosDesdeNube();
+</script>
+</body>
+</html>
